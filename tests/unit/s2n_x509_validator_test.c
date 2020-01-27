@@ -16,6 +16,7 @@
 #include "s2n_test.h"
 #include "testlib/s2n_testlib.h"
 
+#if S2N_OCSP_STAPLING_SUPPORTED
 static int fetch_expired_after_ocsp_timestamp(void *data, uint64_t *timestamp) {
     *timestamp = 7283958536000000000;
     return 0;
@@ -31,6 +32,7 @@ static int fetch_not_expired_ocsp_timestamp(void *data, uint64_t *timestamp) {
     *timestamp = 1552824239000000000;
     return 0;
 }
+#endif
 
 
 static uint32_t write_pem_file_to_stuffer_as_chain(struct s2n_stuffer *chain_out_stuffer, const char *pem_data) {
@@ -58,6 +60,7 @@ static uint32_t write_pem_file_to_stuffer_as_chain(struct s2n_stuffer *chain_out
     return chain_size;
 }
 
+#if S2N_OCSP_STAPLING_SUPPORTED
 static int read_file(struct s2n_stuffer *file_output, const char *path, uint32_t max_len) {
     FILE *fd = fopen(path, "rb");
     s2n_stuffer_alloc(file_output, max_len);
@@ -74,6 +77,7 @@ static int read_file(struct s2n_stuffer *file_output, const char *path, uint32_t
 
     return -1;
 }
+#endif
 
 struct host_verify_data {
     const char *name;
@@ -419,6 +423,7 @@ int main(int argc, char **argv) {
         s2n_x509_trust_store_wipe(&trust_store);
     }
 
+#if S2N_OCSP_STAPLING_SUPPORTED
     /* test expired certificate fails as untrusted*/
     {
         struct s2n_x509_trust_store trust_store;
@@ -459,6 +464,7 @@ int main(int argc, char **argv) {
         s2n_x509_validator_wipe(&validator);
         s2n_x509_trust_store_wipe(&trust_store);
     }
+#endif
 
     /* test validator in safe mode, with properly configured trust store, but the server's end-entity cert is invalid. */
     {
@@ -777,6 +783,7 @@ int main(int argc, char **argv) {
         s2n_x509_trust_store_wipe(&trust_store);
     }
 
+#if S2N_OCSP_STAPLING_SUPPORTED
     /* Test valid OCSP date range */
     {
         struct s2n_x509_trust_store trust_store;
@@ -920,6 +927,7 @@ int main(int argc, char **argv) {
         s2n_x509_validator_wipe(&validator);
         s2n_x509_trust_store_wipe(&trust_store);
     }
+#endif
 
     /* test validator in safe mode, with default host name validator. Connection server name matches alternative name on a certificate. */
     {
@@ -1059,6 +1067,7 @@ int main(int argc, char **argv) {
         s2n_x509_trust_store_wipe(&trust_store);
     }
 
+#if S2N_OCSP_STAPLING_SUPPORTED
     /* Test invalid OCSP date range (after is off) */
     {
         struct s2n_x509_trust_store trust_store;
@@ -1206,6 +1215,7 @@ int main(int argc, char **argv) {
         s2n_x509_validator_wipe(&validator);
         s2n_x509_trust_store_wipe(&trust_store);
     }
+#endif
 
     /* Test trust store in a configuration can handle invalid PEM without crashing */
     {

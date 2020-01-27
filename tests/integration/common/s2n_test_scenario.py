@@ -98,6 +98,7 @@ ALL_CIPHERS_PER_LIBCRYPTO_VERSION = {
     "openssl-1.0.2"         : LEGACY_COMPATIBLE_CIPHERS,
     "openssl-1.0.2-fips"    : LEGACY_COMPATIBLE_CIPHERS,
     "libressl"              : LEGACY_COMPATIBLE_CIPHERS,
+    "boringssl"             : LEGACY_COMPATIBLE_CIPHERS,
 }
 
 

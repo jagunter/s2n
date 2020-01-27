@@ -100,6 +100,10 @@ OPENSSL_1_0_2_FIPS_TEST_CIPHERS = list(filter(lambda x: x.openssl_fips_compatibl
 # ChaCha20-Poly1305 cipher offered by LibreSSL.
 LIBRESSL_TEST_CIPHERS = list(filter(lambda x: "CHACHA20" not in x.openssl_name, ALL_TEST_CIPHERS))
 
+# Test ciphers to use when s2n is built with BoringSSL libcrypto. s2n does not implement the
+# ChaCha20-Poly1305 cipher offered by BoringSSL.
+BORINGSSL_TEST_CIPHERS = list(filter(lambda x: "CHACHA20" not in x.openssl_name, ALL_TEST_CIPHERS))
+
 # Dictionary to look up ciphers to use by libcrypto s2n is built with.
 # Libcrypto string will be an argument to test scripts.
 S2N_LIBCRYPTO_TO_TEST_CIPHERS = {
@@ -107,6 +111,7 @@ S2N_LIBCRYPTO_TO_TEST_CIPHERS = {
     "openssl-1.0.2"         : OPENSSL_1_0_2_TEST_CIPHERS,
     "openssl-1.0.2-fips"    : OPENSSL_1_0_2_FIPS_TEST_CIPHERS,
     "libressl"              : LIBRESSL_TEST_CIPHERS,
+    "boringssl"             : BORINGSSL_TEST_CIPHERS,
 }
 
 S2N_PROTO_VERS_TO_STR = {

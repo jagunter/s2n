@@ -36,6 +36,7 @@
 : "${OPENSSL_1_0_2_INSTALL_DIR:=$(pwd)/test-deps/openssl-1.0.2}"
 : "${OPENSSL_1_0_2_FIPS_INSTALL_DIR:=$(pwd)/test-deps/openssl-1.0.2-fips}"
 : "${LIBRESSL_INSTALL_DIR:=$(pwd)/test-deps/libressl-2.6.4}"
+: "${BORINGSSL_INSTALL_DIR:=$(pwd)/test-deps/boringssl}"
 : "${CPPCHECK_INSTALL_DIR:=$(pwd)/test-deps/cppcheck}"
 : "${CTVERIF_INSTALL_DIR:=$(pwd)/test-deps/ctverif}"
 : "${SIDETRAIL_INSTALL_DIR:=$(pwd)/test-deps/sidetrail}"
@@ -69,6 +70,7 @@ export OPENSSL_1_1_1_INSTALL_DIR
 export OPENSSL_1_0_2_INSTALL_DIR
 export OPENSSL_1_0_2_FIPS_INSTALL_DIR
 export LIBRESSL_INSTALL_DIR
+export BORINGSSL_INSTALL_DIR
 export CPPCHECK_INSTALL_DIR
 export CTVERIF_INSTALL_DIR
 export SIDETRAIL_INSTALL_DIR
@@ -90,6 +92,7 @@ if [[ "$S2N_LIBCRYPTO" == "openssl-1.0.2-fips" ]]; then
 fi
 
 if [[ "$S2N_LIBCRYPTO" == "libressl" ]]; then export LIBCRYPTO_ROOT=$LIBRESSL_INSTALL_DIR ; fi
+if [[ "$S2N_LIBCRYPTO" == "boringssl" ]]; then export LIBCRYPTO_ROOT=$BORINGSSL_INSTALL_DIR ; fi
 
 # Create a link to the selected libcrypto. This shouldn't be needed when LIBCRYPTO_ROOT is set, but some tests
 # have the "libcrypto-root" directory path hardcoded.

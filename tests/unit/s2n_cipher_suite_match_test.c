@@ -231,7 +231,6 @@ int main(int argc, char **argv)
         EXPECT_SUCCESS(s2n_connection_wipe(conn));
 
         /* Test that clients that support PQ ciphers can negotiate them. */
-        const uint8_t expected_pq_wire_choice[] = { TLS_ECDHE_BIKE_RSA_WITH_AES_256_GCM_SHA384 };
         uint8_t client_extensions_data[] = {
                 0xFE, 0x01, /* PQ KEM extension ID */
                 0x00, 0x04, /* Total extension length in bytes */
@@ -239,14 +238,6 @@ int main(int argc, char **argv)
                 0x00, 0x01  /* BIKE1r1-Level1 */
         };
         int client_extensions_len = sizeof(client_extensions_data);
-        s2n_connection_set_cipher_preferences(conn, "KMS-PQ-TLS-1-0-2019-06");
-        conn->client_protocol_version = S2N_TLS12;
-        conn->secure.server_ecc_evp_params.negotiated_curve = s2n_ecc_evp_supported_curves_list[0];
-        conn->secure.client_pq_kem_extension.data = client_extensions_data;
-        conn->secure.client_pq_kem_extension.size = client_extensions_len;
-        EXPECT_SUCCESS(s2n_set_cipher_and_cert_as_tls_server(conn, wire_ciphers, cipher_count));
-        EXPECT_EQUAL(conn->secure.cipher_suite, s2n_cipher_suite_from_wire(expected_pq_wire_choice));
-        EXPECT_SUCCESS(s2n_connection_wipe(conn));
 
         /* Test cipher preferences that use PQ cipher suites that require TLS 1.2 fall back to classic ciphers if a client
          * only supports TLS 1.1 or below, TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA is the first cipher suite that supports

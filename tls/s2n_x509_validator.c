@@ -28,13 +28,13 @@
 #include <openssl/err.h>
 #include <openssl/asn1.h>
 
-#if !defined(OPENSSL_IS_BORINGSSL)
+#if !defined(OPENSSL_IS_BORINGSSL) && !defined(OPENSSL_IS_AWS_LC)
 #include <openssl/ocsp.h>
 #endif
 
 /* one day, boringssl, may add ocsp stapling support. Let's future proof this a bit by grabbing a definition
  * that would have to be there when they add support */
-#if defined(OPENSSL_IS_BORINGSSL) && !defined(OCSP_RESPONSE_STATUS_SUCCESSFUL)
+#if (defined(OPENSSL_IS_BORINGSSL) || defined(OPENSSL_IS_AWS_LC)) && !defined(OCSP_RESPONSE_STATUS_SUCCESSFUL)
 #define S2N_OCSP_STAPLING_SUPPORTED 0
 #else
 #define S2N_OCSP_STAPLING_SUPPORTED 1

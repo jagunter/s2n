@@ -13,6 +13,7 @@
  * permissions and limitations under the License.
  */
 
+#include <openssl/bn.h>
 #include <openssl/evp.h>
 #include <stdint.h>
 
@@ -35,6 +36,12 @@
 
 #define S2N_PARAM_NOT_REQUIRED  0
 #define S2N_PARAM_REQUIRED      1
+
+// This definition was added in OpenSSL 1.1.1 in 2017.
+// Backporting for backwards compatibility with other engines
+#ifndef RSA_PSS_SALTLEN_DIGEST
+#define RSA_PSS_SALTLEN_DIGEST -1
+#endif
 
 typedef const BIGNUM *(*ossl_get_rsa_param_fn) (const RSA *d);
 
@@ -66,14 +73,30 @@ static int s2n_rsa_pss_size(const struct s2n_pkey *key)
     return EVP_PKEY_size(key->key.rsa_pss_key.pkey);
 }
 
+static const BIGNUM *s2n_rsa_get_modulus(const RSA *rsa_key)
+{
+    const BIGNUM *n = NULL;
+    RSA_get0_key(rsa_key, &n, NULL, NULL);
+    return n;
+}
+
+static const BIGNUM *s2n_rsa_get_public_key(const RSA *rsa_key)
+{
+    const BIGNUM *e = NULL;
+    RSA_get0_key(rsa_key, NULL, &e, NULL);
+    return e;
+}
 
 static int s2n_rsa_is_private_key(EVP_PKEY *pkey)
 {
     RSA *rsa_key = EVP_PKEY_get0_RSA(pkey);
 
-    const BIGNUM *d = RSA_get0_d(rsa_key);
-    const BIGNUM *p = RSA_get0_p(rsa_key);
-    const BIGNUM *q = RSA_get0_q(rsa_key);
+    const BIGNUM *d = NULL;
+    RSA_get0_key(rsa_key, NULL, NULL, &d);
+
+    const BIGNUM *p = NULL;
+    const BIGNUM *q = NULL;
+    RSA_get0_factors(rsa_key, &p, &q);
 
     if (d || p || q) {
         return 1;
@@ -218,8 +241,8 @@ static int s2n_rsa_validate_params_match(const struct s2n_pkey *pub, const struc
     notnull_check(pub_rsa_key);
     notnull_check(priv_rsa_key);
 
-    GUARD(s2n_rsa_validate_param_equal(pub_rsa_key, priv_rsa_key, S2N_PARAM_REQUIRED, &RSA_get0_n));
-    GUARD(s2n_rsa_validate_param_equal(pub_rsa_key, priv_rsa_key, S2N_PARAM_NOT_REQUIRED, &RSA_get0_e));
+    GUARD(s2n_rsa_validate_param_equal(pub_rsa_key, priv_rsa_key, S2N_PARAM_REQUIRED, &s2n_rsa_get_modulus));
+    GUARD(s2n_rsa_validate_param_equal(pub_rsa_key, priv_rsa_key, S2N_PARAM_NOT_REQUIRED, &s2n_rsa_get_public_key));
 
     return 0;
 }

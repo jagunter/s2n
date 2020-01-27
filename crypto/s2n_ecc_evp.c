@@ -17,6 +17,10 @@
 
 #include <openssl/ecdh.h>
 #include <openssl/evp.h>
+#if defined(OPENSSL_IS_BORINGSSL)
+/* BoringSSL moved OpenSSL memory functions definitions. */
+#include <openssl/mem.h>
+#endif
 #include <stdint.h>
 
 #include "tls/s2n_tls_parameters.h"

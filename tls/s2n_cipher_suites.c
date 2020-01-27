@@ -20,6 +20,19 @@
 #include "crypto/s2n_cipher.h"
 #include "crypto/s2n_openssl.h"
 
+/* These includes are transitively included for OpenSSL but not BoringSSL.
+ * TODO: Should this transitive include be acceptable for OpenSSL?
+ * If not remove BoringSSL check */
+#if defined(OPENSSL_IS_BORINGSSL) || defined(OPENSSL_IS_AWS_LC)
+    #if !S2N_OPENSSL_VERSION_AT_LEAST(1, 1, 0)
+        /*For OpenSSL_add_all_algorithms*/
+        #include <openssl/evp.h>
+    #else
+        /*For OPENSSL_init_crypto*/
+        #include <openssl/crypto.h>
+    #endif
+#endif
+
 #include "tls/s2n_cipher_preferences.h"
 #include "tls/s2n_tls.h"
 #include "tls/s2n_kex.h"

@@ -140,7 +140,8 @@ static int s2n_evp_hmac_p_hash_init(struct s2n_prf_working_space *ws, s2n_hmac_a
     }
 
     /* Initialize the mac key using the provided secret */
-    notnull_check(ws->tls.p_hash.evp_hmac.mac_key = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, secret->data, secret->size));
+    // TODO EVP_PKEY_HMAC was removed in BoringSSL. Generate key in OpenSSL + BoringSSL compatible manner
+    // notnull_check(ws->tls.p_hash.evp_hmac.mac_key = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL, secret->data, secret->size));
 
     /* Initialize the message digest context with the above message digest and mac key */
     return s2n_evp_hmac_p_hash_digest_init(ws);

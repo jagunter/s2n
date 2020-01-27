@@ -32,7 +32,7 @@ static const EVP_CIPHER *s2n_evp_aes_128_cbc_hmac_sha1(void)
     /* Symbols for AES-SHA1-CBC composite ciphers were added in Openssl 1.0.1:
      * See https://www.openssl.org/news/cl101.txt.
      */
-    #if S2N_OPENSSL_VERSION_AT_LEAST(1,0,1) && !defined LIBRESSL_VERSION_NUMBER
+    #if S2N_OPENSSL_VERSION_AT_LEAST(1,0,1) && !defined LIBRESSL_VERSION_NUMBER && !defined(OPENSSL_IS_BORINGSSL) && !defined(OPENSSL_IS_AWS_LC)
         return EVP_aes_128_cbc_hmac_sha1();
     #else
         return NULL;
@@ -41,7 +41,7 @@ static const EVP_CIPHER *s2n_evp_aes_128_cbc_hmac_sha1(void)
 
 static const EVP_CIPHER *s2n_evp_aes_256_cbc_hmac_sha1(void)
 {
-    #if S2N_OPENSSL_VERSION_AT_LEAST(1,0,1) && !defined LIBRESSL_VERSION_NUMBER
+    #if S2N_OPENSSL_VERSION_AT_LEAST(1,0,1) && !defined LIBRESSL_VERSION_NUMBER && !defined(OPENSSL_IS_BORINGSSL) && !defined(OPENSSL_IS_AWS_LC)
         return EVP_aes_256_cbc_hmac_sha1();
     #else
         return NULL;
@@ -53,7 +53,7 @@ static const EVP_CIPHER *s2n_evp_aes_128_cbc_hmac_sha256(void)
     /* Symbols for AES-SHA256-CBC composite ciphers were added in Openssl 1.0.2:
      * See https://www.openssl.org/news/cl102.txt. Not supported in any LibreSSL releases.
      */
-    #if S2N_OPENSSL_VERSION_AT_LEAST(1,0,2) && !defined LIBRESSL_VERSION_NUMBER
+    #if S2N_OPENSSL_VERSION_AT_LEAST(1,0,2) && !defined LIBRESSL_VERSION_NUMBER && !defined(OPENSSL_IS_BORINGSSL) && !defined(OPENSSL_IS_AWS_LC)
         return EVP_aes_128_cbc_hmac_sha256();
     #else
         return NULL;
@@ -62,7 +62,7 @@ static const EVP_CIPHER *s2n_evp_aes_128_cbc_hmac_sha256(void)
 
 static const EVP_CIPHER *s2n_evp_aes_256_cbc_hmac_sha256(void)
 {
-    #if S2N_OPENSSL_VERSION_AT_LEAST(1,0,2) && !defined LIBRESSL_VERSION_NUMBER
+    #if S2N_OPENSSL_VERSION_AT_LEAST(1,0,2) && !defined LIBRESSL_VERSION_NUMBER && !defined(OPENSSL_IS_BORINGSSL) && !defined(OPENSSL_IS_AWS_LC)
         return EVP_aes_256_cbc_hmac_sha256();
     #else
         return NULL;
@@ -111,28 +111,34 @@ static uint8_t s2n_composite_cipher_aes256_sha256_available(void)
 static int s2n_composite_cipher_aes_sha_initial_hmac(struct s2n_session_key *key, uint8_t *sequence_number, uint8_t content_type,
                                                      uint16_t protocol_version, uint16_t payload_and_eiv_len, int *extra)
 {
-    uint8_t ctrl_buf[S2N_TLS12_AAD_LEN];
-    struct s2n_blob ctrl_blob = { .data = ctrl_buf, .size = S2N_TLS12_AAD_LEN };
-    struct s2n_stuffer ctrl_stuffer = {0};
-    GUARD(s2n_stuffer_init(&ctrl_stuffer, &ctrl_blob));
+    #if !defined(OPENSSL_IS_BORINGSSL) && !defined(OPENSSL_IS_AWS_LC)
+	uint8_t ctrl_buf[S2N_TLS12_AAD_LEN];
+	struct s2n_blob ctrl_blob = { .data = ctrl_buf, .size = S2N_TLS12_AAD_LEN };
+	struct s2n_stuffer ctrl_stuffer = {0};
+	GUARD(s2n_stuffer_init(&ctrl_stuffer, &ctrl_blob));
 
-    GUARD(s2n_stuffer_write_bytes(&ctrl_stuffer, sequence_number, S2N_TLS_SEQUENCE_NUM_LEN));
-    GUARD(s2n_stuffer_write_uint8(&ctrl_stuffer, content_type));
-    GUARD(s2n_stuffer_write_uint8(&ctrl_stuffer, protocol_version / 10));
-    GUARD(s2n_stuffer_write_uint8(&ctrl_stuffer, protocol_version % 10));
-    GUARD(s2n_stuffer_write_uint16(&ctrl_stuffer, payload_and_eiv_len));
+	GUARD(s2n_stuffer_write_bytes(&ctrl_stuffer, sequence_number, S2N_TLS_SEQUENCE_NUM_LEN));
+	GUARD(s2n_stuffer_write_uint8(&ctrl_stuffer, content_type));
+	GUARD(s2n_stuffer_write_uint8(&ctrl_stuffer, protocol_version / 10));
+	GUARD(s2n_stuffer_write_uint8(&ctrl_stuffer, protocol_version % 10));
+	GUARD(s2n_stuffer_write_uint16(&ctrl_stuffer, payload_and_eiv_len));
 
-    /* This will unnecessarily mangle the input buffer, which is fine since it's temporary
-     * Return value will be length of digest, padding, and padding length byte.
-     * See https://github.com/openssl/openssl/blob/master/crypto/evp/e_aes_cbc_hmac_sha1.c#L814
-     * and https://github.com/openssl/openssl/blob/4f0c475719defd7c051964ef9964cc6e5b3a63bf/ssl/record/ssl3_record.c#L743
-     */
-    int ctrl_ret = EVP_CIPHER_CTX_ctrl(key->evp_cipher_ctx, EVP_CTRL_AEAD_TLS1_AAD, S2N_TLS12_AAD_LEN, ctrl_buf);
+	/* This will unnecessarily mangle the input buffer, which is fine since it's temporary
+	 * Return value will be length of digest, padding, and padding length byte.
+	 * See https://github.com/openssl/openssl/blob/master/crypto/evp/e_aes_cbc_hmac_sha1.c#L814
+	 * and https://github.com/openssl/openssl/blob/4f0c475719defd7c051964ef9964cc6e5b3a63bf/ssl/record/ssl3_record.c#L743
+	 */
+	int ctrl_ret = EVP_CIPHER_CTX_ctrl(key->evp_cipher_ctx, EVP_CTRL_AEAD_TLS1_AAD, S2N_TLS12_AAD_LEN, ctrl_buf);
 
-    S2N_ERROR_IF(ctrl_ret < 0, S2N_ERR_INITIAL_HMAC);
+	S2N_ERROR_IF(ctrl_ret < 0, S2N_ERR_INITIAL_HMAC);
 
-    *extra = ctrl_ret;
-    return 0;
+	*extra = ctrl_ret;
+	return 0;
+    #else
+	/* Not supported */
+	S2N_ERROR_IF(true, S2N_ERR_INITIAL_HMAC);
+	return 0;
+    #endif
 }
 
 static int s2n_composite_cipher_aes_sha_encrypt(struct s2n_session_key *key, struct s2n_blob *iv, struct s2n_blob *in, struct s2n_blob *out)

@@ -27,7 +27,7 @@
  * LibreSSL supports the cipher, but the interface is different from Openssl's. We should define a
  * separate s2n_cipher struct for the LibreSSL version.
  */
-#if ((S2N_OPENSSL_VERSION_AT_LEAST(1,1,0)) && (!defined LIBRESSL_VERSION_NUMBER))
+#if ((S2N_OPENSSL_VERSION_AT_LEAST(1,1,0)) && (!defined LIBRESSL_VERSION_NUMBER) && (!defined(OPENSSL_IS_BORINGSSL)) && (!defined(OPENSSL_IS_AWS_LC)))
 #define S2N_CHACHA20_POLY1305_AVAILABLE
 #endif
 

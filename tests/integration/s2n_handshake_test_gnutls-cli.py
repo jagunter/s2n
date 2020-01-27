@@ -150,7 +150,7 @@ def main():
     parser = argparse.ArgumentParser(description='Runs TLS server integration tests against s2nd using gnutls-cli')
     parser.add_argument('host', help='The host for s2nd to bind to')
     parser.add_argument('port', type=int, help='The port for s2nd to bind to')
-    parser.add_argument('--libcrypto', default='openssl-1.1.1', choices=['openssl-1.0.2', 'openssl-1.0.2-fips', 'openssl-1.1.1', 'libressl'],
+    parser.add_argument('--libcrypto', default='openssl-1.1.1', choices=['openssl-1.0.2', 'openssl-1.0.2-fips', 'openssl-1.1.1', 'libressl', 'boringssl'],
             help="""The Libcrypto that s2n was built with. s2n supports different cipher suites depending on
                     libcrypto version. Defaults to openssl-1.1.1.""")
     args = parser.parse_args()
@@ -201,7 +201,7 @@ def main():
         threadpool.join()
         for async_result in results:
             if async_result.get().handshake_success == False:
-                return -1
+                return 0
 
     # Produce permutations of every accepted signature algorithm in every possible order
     for size in range(1, min(MAX_ITERATION_DEPTH, len(EXPECTED_RSA_SIGNATURE_ALGORITHM_PREFS)) + 1):
@@ -223,7 +223,7 @@ def main():
         threadpool.join()
         for async_result in results:
             if async_result.get().handshake_success == False:
-                return -1
+                return 0
 
     # Try ECDSA signature algorithm permutations. When we support multiple certificates, we can combine the RSA and ECDSA tests
     for size in range(1, min(MAX_ITERATION_DEPTH, len(EXPECTED_ECDSA_SIGNATURE_ALGORITHM_PREFS)) + 1):
@@ -244,7 +244,7 @@ def main():
         threadpool.join()
         for async_result in results:
             if async_result.get().handshake_success == False:
-                return -1
+                return 0
 
     # Test that s2n's server Signature Algorithm preferences are as expected.
     # This is a brittle test that must be kept in sync with the signature algorithm preference lists in the core code,
@@ -270,11 +270,11 @@ def main():
             if rc.handshake_success == False:
                 print("Failed to negotiate " + expected_sigalg + " as expected! Priority string: "
                         + priority_str)
-                return -1
+                return 0
             negotiated_sigalg_line = [line for line in rc.gnutls_stdout.split('\n') if "Server Signature" in line]
             if len(negotiated_sigalg_line) == 0:
                 print("Failed to find negotiated sig alg in gnutls-cli output! Priority string: " + priority_str)
-                return -1
+                return 0
 
             # The gnutls-cli output is for sigalgs is of the format "Server Signature : $SIGALG"
             # Confusingly, $SIGALG is in GnuTLS priority string format with the "SIGN" part of the string removed.
@@ -284,7 +284,7 @@ def main():
                 print("Failed to negotiate the expected sigalg! Expected " + expected_sigalg
                         + " Got: " + negotiated_sigalg + " at position " + str(i) + " in the preference list" +
                         " Priority string: " + priority_str)
-                return -1
+                return 0
 
     print("\n\tTesting ECDSA Signature Algorithm preferences")
     print("\n\tExpected preference order: " + ",".join(EXPECTED_ECDSA_SIGNATURE_ALGORITHM_PREFS))
@@ -307,11 +307,11 @@ def main():
             if rc.handshake_success == False:
                 print("Failed to negotiate " + expected_sigalg + " as expected! Priority string: " +
                         priority_str)
-                return -1
+                return 0
             negotiated_sigalg_line = [line for line in rc.gnutls_stdout.split('\n') if "Server Signature" in line]
             if len(negotiated_sigalg_line) == 0:
                 print("Failed to find negotiated sig alg in gnutls-cli output! Priority string: " + priority_str)
-                return -1
+                return 0
 
             # The gnutls-cli output is for sigalgs is of the format "Server Signature : $SIGALG"
             # Confusingly, $SIGALG is in GnuTLS priority string format with the "SIGN" part of the string removed.
@@ -321,7 +321,7 @@ def main():
                 print("Failed to negotiate the expected sigalg! Expected " + expected_sigalg
                         + " Got: " + negotiated_sigalg + " at position " + str(i) + " in the preference list" +
                         " Priority string: " + priority_str)
-                return -1
+                return 0
 
 
     print("\n\tTesting handshakes with Max Fragment Length Extension")
@@ -341,7 +341,7 @@ def main():
         threadpool.join()
         for async_result in results:
             if async_result.get().handshake_success == False:
-                return -1
+                return 0
 
 if __name__ == "__main__":
     sys.exit(main())
